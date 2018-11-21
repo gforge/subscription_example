@@ -4,7 +4,7 @@
   "description": "Supersimple ApolloServer test for subscriptions",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node index.js"
+    "start": "babel-node src/index.js"
   },
   "author": "Max Gordon",
   "license": "ISC",
