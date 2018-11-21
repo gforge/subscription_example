@@ -1,0 +1,23 @@
+{
+  "name": "subscription_example",
+  "version": "1.0.0",
+  "description": "Supersimple ApolloServer test for subscriptions",
+  "main": "index.js",
+  "scripts": {
+    "start": "babel-node index.js"
+  },
+  "author": "Max Gordon",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server-express": "^2.2.2",
+    "express": "^4.16.4",
+    "graphql": "^14.0.2",
+    "http": "0.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/node": "^7.0.0",
+    "@babel/preset-env": "^7.1.6"
+  }
+}
