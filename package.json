@@ -9,7 +9,7 @@
   "author": "Max Gordon",
   "license": "ISC",
   "dependencies": {
-    "apollo-server-express": "^2.2.2",
+    "apollo-server-express": "^2.14.2",
     "express": "^4.16.4",
     "graphql": "^14.0.2",
     "http": "0.0.0"
