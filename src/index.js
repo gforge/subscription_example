@@ -82,7 +82,12 @@ const startServer = async () => {
   // Shut down in the case of interrupt and termination signals
   // We expect to handle this more cleanly in the future. See (#5074)[https://github.com/apollographql/apollo-server/issues/5074] for reference.
   ['SIGINT', 'SIGTERM'].forEach((signal) => {
-    process.on(signal, () => subscriptionServer.close());
+    process.on(signal, async () => {
+      subscriptionServer.close();
+      await server.stop();
+      console.log('Server closed');
+      process.exit(0);
+    });
   });
 
   await server.start();
