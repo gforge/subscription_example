@@ -1,6 +1,11 @@
-import http from 'http';
-import { ApolloServer, PubSub } from 'apollo-server-express';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
+import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
+import { execute, subscribe } from 'graphql';
+import { PubSub } from 'graphql-subscriptions';
+import { createServer } from 'http';
+import { SubscriptionServer } from 'subscriptions-transport-ws';
 
 const pubsub = new PubSub();
 
@@ -29,7 +34,7 @@ const resolvers = {
   Query: {
     messages() {
       return messages;
-    }
+    },
   },
   Mutation: {
     addMessage(root, { message }) {
@@ -53,21 +58,41 @@ const app = express();
 
 const PORT = 4000;
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  subscriptions: {
-    onConnect: () => console.log('Connected to websocket'),
-  },
-  tracing: true,
-});
+const startServer = async () => {
+  const httpServer = createServer(app);
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+  const server = new ApolloServer({
+    schema,
+    plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
+    tracing: true,
+  });
 
-server.applyMiddleware({ app })
+  const subscriptionServer = SubscriptionServer.create(
+    {
+      schema,
+      execute,
+      subscribe,
+    },
+    {
+      server: httpServer,
+      path: server.graphqlPath,
+    },
+  );
 
-const httpServer = http.createServer(app);
-server.installSubscriptionHandlers(httpServer);
+  // Shut down in the case of interrupt and termination signals
+  // We expect to handle this more cleanly in the future. See (#5074)[https://github.com/apollographql/apollo-server/issues/5074] for reference.
+  ['SIGINT', 'SIGTERM'].forEach((signal) => {
+    process.on(signal, () => subscriptionServer.close());
+  });
 
-httpServer.listen(PORT, () => {
-  console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`)
-  console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`)
-})
+  await server.start();
+
+  server.applyMiddleware({ app });
+
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`);
+  });
+};
+
+startServer();

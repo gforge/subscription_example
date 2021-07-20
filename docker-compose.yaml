@@ -3,5 +3,5 @@ services:
   web:
     build: .
     ports:
-     - "4000:4000"
+      - '4000:4000'
     image: subapp

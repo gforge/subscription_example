@@ -1,6 +1,6 @@
 {
   "name": "subscription_example",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Supersimple ApolloServer test for subscriptions",
   "main": "index.js",
   "scripts": {
@@ -9,15 +9,19 @@
   "author": "Max Gordon",
   "license": "ISC",
   "dependencies": {
-    "apollo-server-express": "^2.14.2",
+    "@graphql-tools/schema": "^7.1.5",
+    "apollo-server-express": "^3.0.1",
     "express": "^4.16.4",
-    "graphql": "^14.0.2",
-    "http": "0.0.0"
+    "graphql": "^15.5.1",
+    "graphql-subscriptions": "^1.2.1",
+    "http": "0.0.1-security",
+    "subscriptions-transport-ws": "^0.9.19"
   },
   "devDependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.1.6",
     "@babel/node": "^7.0.0",
-    "@babel/preset-env": "^7.1.6"
+    "@babel/preset-env": "^7.1.6",
+    "prettier": "2.3.2"
   }
 }
