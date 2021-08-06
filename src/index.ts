@@ -1,58 +1,16 @@
+import { loadFilesSync } from '@graphql-tools/load-files';
+import { mergeTypeDefs } from '@graphql-tools/merge';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import { execute, subscribe } from 'graphql';
-import { PubSub } from 'graphql-subscriptions';
 import { createServer } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
+import { resolvers } from './resolvers';
+import path from 'path';
 
-const pubsub = new PubSub();
-
-// The DB
-const messages = [];
-
-const typeDefs = `
-type Query {
-  messages: [String!]!
-}
-type Mutation {
-  addMessage(message: String!): [String!]!
-}
-type Subscription {
-  newMessage: String!
-}
-
-schema {
-  query: Query
-  mutation: Mutation
-  subscription: Subscription
-}
-`;
-
-const resolvers = {
-  Query: {
-    messages() {
-      return messages;
-    },
-  },
-  Mutation: {
-    addMessage(root, { message }) {
-      let entry = JSON.stringify({ id: messages.length, message: message });
-      messages.push(entry);
-      pubsub.publish('newMessage', { entry: entry });
-      return messages;
-    },
-  },
-  Subscription: {
-    newMessage: {
-      resolve: (message) => {
-        return message.entry;
-      },
-      subscribe: () => pubsub.asyncIterator('newMessage'),
-    },
-  },
-};
+const typeDefs = mergeTypeDefs(loadFilesSync(path.join(__dirname, './**/*.graphql')));
 
 const app = express();
 
@@ -64,7 +22,6 @@ const startServer = async () => {
   const server = new ApolloServer({
     schema,
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
-    tracing: true,
   });
 
   const subscriptionServer = SubscriptionServer.create(

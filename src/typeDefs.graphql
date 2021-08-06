@@ -1,0 +1,17 @@
+type Query {
+  messages: [String!]!
+}
+
+type Mutation {
+  addMessage(message: String!): [String!]!
+}
+
+type Subscription {
+  newMessage: String!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
