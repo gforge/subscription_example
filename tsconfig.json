@@ -3,5 +3,8 @@
   "include": ["./src/**/*.ts"],
   "compilerOptions": {
     "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": { "@/*": [ "src/*" ] },
+    "sourceMap": true
   }
 }

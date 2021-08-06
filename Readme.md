@@ -1,6 +1,6 @@
 # An ApolloServer example
 
-The simplest possible example to run a ApolloServer with subscriptions.
+The simplest possible example to run a ApolloServer with subscriptions with authorization.
 
 ## Docker
 
@@ -29,6 +29,7 @@ To run just write (the `--rm` makes it easier to clean up the container):
 ```bash
 docker run --name subapp --rm -p 49160:4000 -d <your username>/subscription-app
 ```
+
 ### Extra stuff
 
 Additional useful commands:
@@ -46,7 +47,17 @@ $ docker exec -it <container id or name ('subapp' if used above run)> /bin/bash
 
 ## Testing
 
-Then you can connect to it on [localhost:4000/graphql](http://localhost:4000/graphql) and run two simultaneous graphql queries in two tabs. The firs one should be the subscription:
+Then you can connect to it on [localhost:4000/graphql](http://localhost:4000/graphql) and run two simultaneous graphql queries in multiple tabs. **Note** Once you enter a subscription the context will never change, thus we need to first login:
+
+```gql
+mutation {
+  login(email: "john@doe.com", password: "pwd123") {
+    name
+  }
+}
+```
+
+Then in a new tab, start a subscription:
 
 ```gql
 subscription {
@@ -54,8 +65,7 @@ subscription {
 }
 ```
 
-The second one should be the mutation for publishing to the subscription:
-
+The third tab should do a mutation for publishing to the subscription-tab:
 
 ```gql
 mutation {
@@ -68,7 +78,7 @@ After running the mutation you should see "Testing to send a subscription messag
 ```json
 {
   "data": {
-    "newMessage": "{\"id\":0,\"message\":\"Testing to send a subscription message\"}"
+    "newMessage": "Testing to send a subscription message"
   }
 }
 ```

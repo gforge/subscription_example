@@ -1,34 +1,40 @@
-import { loadFilesSync } from '@graphql-tools/load-files';
-import { mergeTypeDefs } from '@graphql-tools/merge';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
+import session from 'express-session';
 import { execute, subscribe } from 'graphql';
+import { buildContext, createOnConnect } from 'graphql-passport';
 import { createServer } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
-import { resolvers } from './resolvers';
-import path from 'path';
 
-const typeDefs = mergeTypeDefs(loadFilesSync(path.join(__dirname, './**/*.graphql')));
-
-const app = express();
-
-const PORT = 4000;
+import { AppPassport } from './auth';
+import { db } from './db';
+import { resolvers, typeDefs } from './schema';
 
 const startServer = async () => {
-  const httpServer = createServer(app);
+  const app = express();
+  const sessionMiddleware = session({ secret: 'cats', resave: false, saveUninitialized: false });
+  const passportMiddleware = AppPassport.initialize();
+  const passportSessionMiddleware = AppPassport.session();
+  app.use(sessionMiddleware);
+  app.use(passportMiddleware);
+  app.use(passportSessionMiddleware);
+
   const schema = makeExecutableSchema({ typeDefs, resolvers });
   const server = new ApolloServer({
     schema,
-    plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
+    plugins: [ApolloServerPluginLandingPageGraphQLPlayground({ settings: { 'request.credentials': 'include' } })],
+    context: ({ req, res }) => buildContext({ req, res, db }),
   });
 
+  const httpServer = createServer(app);
   const subscriptionServer = SubscriptionServer.create(
     {
       schema,
       execute,
       subscribe,
+      onConnect: createOnConnect([sessionMiddleware, passportMiddleware, passportSessionMiddleware]),
     },
     {
       server: httpServer,
@@ -51,6 +57,7 @@ const startServer = async () => {
 
   server.applyMiddleware({ app });
 
+  const PORT = 4000;
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
     console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`);

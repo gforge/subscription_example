@@ -2,8 +2,14 @@ type Query {
   messages: [String!]!
 }
 
+type User {
+  email: String!
+  name: String!
+}
+
 type Mutation {
   addMessage(message: String!): [String!]!
+  login(email: String!, password: String!): User
 }
 
 type Subscription {

@@ -2,7 +2,12 @@ overwrite: true
 schema: src/**/*.graphql
 documents: null
 generates:
-  src/@types/schema.types.d.ts:
+  src/types/schema.types.d.ts:
+    config:
+      typesPrefix: Gql
     plugins:
       - typescript
       - typescript-resolvers
+hooks:
+  afterOneFileWrite:
+    - prettier --write
