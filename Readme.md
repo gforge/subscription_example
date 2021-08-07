@@ -1,6 +1,18 @@
-# An ApolloServer example
+# An ApolloServer subscription example with passport
 
-The simplest possible example to run a ApolloServer with subscriptions with authorization.
+A simple example to run a ApolloServer with subscriptions and authorization. The logic in this example contains:
+
+- login functionality using `graphql-passport`
+- message publication using subscriptions
+- filtering subscriptions
+- checking subscriptions for valid credentials
+
+## Direct run
+
+For running in any NodeJS environment you have two options:
+
+- `npm run start` - runs `ts-node` and starts the application
+- `npm run dev` - runs `ts-node-dev` and allows you to do changes in the application with automated respawns
 
 ## Docker
 
@@ -12,7 +24,7 @@ The simplest aproach is to just run:
 docker-compose up
 ```
 
-### Basic run
+### Using plain `docker`
 
 Package also contains a Dockerfile that can be used to isolate the app. The
 code is inspired by: https://nodejs.org/en/docs/guides/nodejs-docker-webapp/
@@ -82,3 +94,7 @@ After running the mutation you should see "Testing to send a subscription messag
   }
 }
 ```
+
+### Tips
+
+To test the user login functionality with multiple users you can start an _incognito_/_private_ window or an alternative browser, load up the playground and see how messages are sent between users.

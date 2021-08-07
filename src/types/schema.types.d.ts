@@ -37,6 +37,7 @@ export type GqlQuery = {
 export type GqlSubscription = {
   __typename?: 'Subscription';
   newMessage: Scalars['String'];
+  personalMessage: Scalars['String'];
 };
 
 export type GqlUser = {
@@ -165,6 +166,7 @@ export type GqlSubscriptionResolvers<
   ParentType extends GqlResolversParentTypes['Subscription'] = GqlResolversParentTypes['Subscription'],
 > = {
   newMessage?: SubscriptionResolver<GqlResolversTypes['String'], 'newMessage', ParentType, ContextType>;
+  personalMessage?: SubscriptionResolver<GqlResolversTypes['String'], 'personalMessage', ParentType, ContextType>;
 };
 
 export type GqlUserResolvers<

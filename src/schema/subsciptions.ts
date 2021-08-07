@@ -1,17 +1,35 @@
+import { ForbiddenError } from 'apollo-server-express';
+import { withFilter } from 'graphql-subscriptions';
+
 import { AppContext, GqlSubscriptionResolvers } from '@/types';
 
-import { appPubsub } from './appPubSub';
+import { MesssageEntry } from '../db';
+import { subscribeToNewMessages } from './publicationServices';
 
-interface MessagePublication {
-  id: number;
-  entry: string;
-}
+const subscribeIfLoggedIn =
+  <Ret>(subscriptionFn: () => AsyncIterator<Ret>) =>
+  (parent: unknown, args: unknown, context: AppContext) => {
+    if (!context.req.user) throw new ForbiddenError('Must be logged in');
+
+    return subscriptionFn();
+  };
 
 export const subsciptions: GqlSubscriptionResolvers<AppContext> = {
   newMessage: {
-    resolve: (message: MessagePublication, args: Record<never, unknown>, { req }: AppContext) => {
-      return `${JSON.parse(message.entry).message} @ current user: ${req.user?.email}`;
+    resolve: (message: MesssageEntry, args: Record<never, unknown>, { req }: AppContext) => {
+      return `${message.message} from ${message.userId} -> current user: ${req.user?.email}`;
     },
-    subscribe: () => appPubsub.asyncIterator('newMessage'),
+    subscribe: subscribeIfLoggedIn<MesssageEntry>(subscribeToNewMessages),
+  },
+  personalMessage: {
+    resolve: (message: MesssageEntry, args: Record<never, unknown>, { req }: AppContext) => {
+      return `${message.message} from ${message.userId} -> current user: ${req.user?.email}`;
+    },
+    subscribe: withFilter(
+      subscribeIfLoggedIn<MesssageEntry>(subscribeToNewMessages),
+      (message: MesssageEntry, variables, { req }) => {
+        return message.userId === req.user?.email;
+      },
+    ),
   },
 };
