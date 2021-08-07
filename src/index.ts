@@ -1,15 +1,14 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
-import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
+import { graphqlHTTP } from 'express-graphql';
 import session from 'express-session';
-import { execute, subscribe } from 'graphql';
-import { buildContext, createOnConnect } from 'graphql-passport';
+import { execute, ExecutionArgs, subscribe } from 'graphql';
+import { buildContext } from 'graphql-passport';
+import { useServer } from 'graphql-ws/lib/use/ws';
 import { createServer } from 'http';
-import { SubscriptionServer } from 'subscriptions-transport-ws';
+import ws from 'ws';
 
 import { AppPassport } from './auth';
-import { db } from './db';
 import { resolvers, typeDefs } from './schema';
 
 const startServer = async () => {
@@ -22,45 +21,43 @@ const startServer = async () => {
   app.use(passportSessionMiddleware);
 
   const schema = makeExecutableSchema({ typeDefs, resolvers });
-  const server = new ApolloServer({
-    schema,
-    plugins: [ApolloServerPluginLandingPageGraphQLPlayground({ settings: { 'request.credentials': 'include' } })],
-    context: ({ req, res }) => buildContext({ req, res, db }),
-  });
-
-  const httpServer = createServer(app);
-  const subscriptionServer = SubscriptionServer.create(
-    {
-      schema,
-      execute,
-      subscribe,
-      onConnect: createOnConnect([sessionMiddleware, passportMiddleware, passportSessionMiddleware]),
-    },
-    {
-      server: httpServer,
-      path: server.graphqlPath,
-    },
-  );
-
-  // Shut down in the case of interrupt and termination signals
-  // We expect to handle this more cleanly in the future. See (#5074)[https://github.com/apollographql/apollo-server/issues/5074] for reference.
-  ['SIGINT', 'SIGTERM'].forEach((signal) => {
-    process.on(signal, async () => {
-      subscriptionServer.close();
-      await server.stop();
-      console.log('Server closed');
-      process.exit(0);
-    });
-  });
-
-  await server.start();
-
-  server.applyMiddleware({ app });
 
   const PORT = 4000;
+  const subscriptionEndpoint = `ws://localhost:${PORT}/subscriptions`;
+  const gqlServer = graphqlHTTP({
+    schema,
+    graphiql: {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      subscriptionEndpoint,
+      websocketClient: 'v1',
+    },
+    customExecuteFn: ({ contextValue: req, ...rest }: ExecutionArgs) =>
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      execute({ ...rest, contextValue: buildContext({ req, res: {} }) }),
+  });
+  app.use('/graphql', gqlServer);
+
+  const httpServer = createServer(app);
+
+  const wsServer = new ws.Server({
+    server: httpServer,
+    path: '/subscriptions',
+  });
+
   httpServer.listen(PORT, () => {
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
-    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}${server.graphqlPath}`);
+    useServer(
+      {
+        schema,
+        execute,
+        subscribe,
+      },
+      wsServer,
+    );
+
+    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}/graphql`);
   });
 };
 

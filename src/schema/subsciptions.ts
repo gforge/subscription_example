@@ -1,4 +1,3 @@
-import { ForbiddenError } from 'apollo-server-express';
 import { withFilter } from 'graphql-subscriptions';
 
 import { AppContext, GqlSubscriptionResolvers } from '@/types';
@@ -9,7 +8,7 @@ import { subscribeToNewMessages } from './publicationServices';
 const subscribeIfLoggedIn =
   <Ret>(subscriptionFn: () => AsyncIterator<Ret>) =>
   (parent: unknown, args: unknown, context: AppContext) => {
-    if (!context.req.user) throw new ForbiddenError('Must be logged in');
+    if (!context.req.user) throw new Error('Must be logged in');
 
     return subscriptionFn();
   };
