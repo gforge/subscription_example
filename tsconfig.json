@@ -2,9 +2,12 @@
   "extends": "@tsconfig/node14/tsconfig.json",
   "include": ["./src/**/*.ts"],
   "compilerOptions": {
-    "outDir": "./dist",
+    "outDir": "dist",
+    "rootDir": "src",
     "baseUrl": ".",
     "paths": { "@/*": [ "src/*" ] },
-    "sourceMap": true
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "typeRoots": ["node_modules/@types", "src/types"],
   }
 }
